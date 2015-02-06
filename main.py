@@ -1,15 +1,13 @@
-import skimage, skimage.io
-import mathystuff
+import imagemanip
 
-image = skimage.img_as_float(skimage.io.imread('imagetest/lines.png'))
-skimage.io.imshow(image)
-skimage.io.show()
-greyimage = skimage.color.rgb2grey(image)
-skimage.io.imshow(greyimage)
-skimage.io.show()
-gradient = mathystuff.convolvedGradient(greyimage, 2.0, 9)
-skimage.io.imshow(skimage.color.gray2rgb(gradient[0]))
-skimage.io.show()
-skimage.io.imshow(gradient[1])
-skimage.io.show()
-print gradient[0]
+CONST_FILE = 'mandrill.jpg'
+
+CONST_SIGMA = 5.0
+CONST_KWINDOW = 15
+CONST_THI = .3
+CONST_TLO = .15
+CONST_CWINDOW = 23
+
+imagemanip.procAndWrite(CONST_FILE, CONST_SIGMA, CONST_KWINDOW,
+                        CONST_THI, CONST_TLO, CONST_CWINDOW)
+

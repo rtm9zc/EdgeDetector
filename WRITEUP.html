@@ -1,0 +1,191 @@
+<h1>Computer Vision Assignment 1<br>
+Canny Edge Detector and Corner Detector<br></h1>
+<br>
+<h2>Robert Michaels, 2/5/15</h2><br>
+<br>
+Sorry for being a few minutes late. Had to re-run images, and it took me past the midnight deadline unfortunately. On my honor, I didn't touch the code after this time. I'm pretty satisfyied with how this turned out. Corner detection could have been a bit better, but I'm proud of it over all.<br>
+<br>
+<br>
+<h2>Organization:</h2><br>
+<h3>main.py:</h3><br>
+Calls a function that runs and generates all of the images. The parameters of this function and how they influence the output are as follows:<br>
+<br>
+CONST_FILENAME: Name of the image to read in. In same directory as the main.py file. Generated pictures are placed in a folder named the filename with extension removed.<br>
+CONST_SIGMA: The width of the Gaussian computed. Higher values cause higher amounts of blur filtering, and thus also filters out smaller, less pronounced edges.<br>
+CONST_KWINDOW: The width of the Gaussian kernel. An odd integer, usually around 10. Wider kernels cause smoother blurring.<br>
+CONST_THI: High threshold for hysteresis thresholding. A fraction of the highest edge strength. Usually set at .3, so the high threshold would be .3*whatever the strongest edge pixel is.<br>
+CONST_TLO: Low threshold for hysteresis thresholding. Like THI, is also a fraction of the strongest edge. I like to tweak it around .1 to .15. Higher values leave less small edges.<br>
+CONST_CWINDOW: Width in pixels of covariance matrix/corner patch size in corner detection. Usually between 11 and 25. Larger sizes define more prominent features with less final corner points, but also take longer to calculate.<br>
+<br>
+<br>
+<h3>imagemanip.py:</h3><br>
+Functions that produce images to show intermediate steps.<br>
+<br>
+grad2rgb(image): Takes in one of the gradient results (Fx or Fy) and returns an image with green for positive values and red for negative.<br>
+addCorners(image, points, windowSize): Returns a copy of image with the corners overlaid. windowSize is the width of the corner patch<br>
+procAndWrite(filename, sigma, kernelWindow, t_high, t_low, cornerWindow): Main function to generate images seen later on the page. Each parameter corresponds to a constant in main.py<br>
+<br>
+<br>
+<h3>mathystuff.py:</h3><br>
+This aptly named file does the bulk of the work, mathematically speaking<br>
+<br>
+getGaussian(sigma, kernelSize, deriv, dimension): Returns a 1-D Gaussian kernal of specifications provided. deriv is a boolean, set to True if we want a first order derivative. Dimension is a character, either 'x' or 'y', for the orientation of the returned kernel.<br>
+buildXGauss(sigma, kernelSize, deriv): Helper for getGaussian, returns a 1XkernelSize Gaussian kernel.<br>
+buildYGauss(sigma, kernelSize, deriv): Helper for getGaussian, returns a kernelSizeX1 Gaussian kernel.<br>
+gaussian(x, sigma): Calcuates 1d G(x, sigma)<br>
+derivGaussian(x, sigma): Calculates 1d G'(x, sigma)<br>
+convolvedGradient(image, sigma, kernelSize): Convolves image with a Gaussian kernel of paramaters sigma and kernelSize. Returns a tuple of arrays, (Dx, Dy)<br>
+edgeStrength(gradient): Returns an array of the magnitude of Dx and Dy in provided gradient<br>
+normalOrientation(gradient): Returns an array of arctan(Dy/Dx)<br>
+squareDirections(orientation): Changes orientations to nearest 45 degree representation<br>
+squareAngle(angle): Returns closest 45 degree angle to a radian input<br>
+edgeSuppress(edges, directions): Returns edge-suppressed version of edges, directions are squareDirections output<br>
+check4Edge(edges, angle, row, col): Majority of edge suppression. Checks along angles, either returns edges[row][col]'s original value, or 0 if not a strong edge<br>
+edgeThreshold(edges, directions, t_high, t_low): Edge thresholding. Directions are squareDirections.<br>
+chain(outArray, edges, row, col, directions, t_low, visited): A pretty cool recursive function that creates the edges for the thresholding.<br>
+normalize(array): Divides all array elements by the max element. Woo.<br>
+eiganImage(gradient, windowSize): Returns an image of the min eiganval intensities with covariance matrix of width windowSize<br>
+eigan2Points(eiganImage, windowSize): Takes in eiganImage, returns a list of 3 tuples, (eigenval intensity, row, col) if intensity over a quarter of the max intensity<br>
+covarianceMat(gradient, windowSize, row, col): Returns covariance matrix for specified pixel and window. I really should have memoized these, as there is significant slowdown computing eiganvals<br>
+cornerSuppress(cornerList, windowSize, imgShape): Returns a new list of final corner points.<br>
+<br>
+building.jpg<br>
+CONST_SIGMA = 2.0<br>
+CONST_KWINDOW = 7<br>
+CONST_THI = .3<br>
+CONST_TLO = .1<br>
+CONST_CWINDOW = 23<br>
+<table border="1" style="width:100%">
+  <tr>
+    <td>Standard</td>
+    <td>Greyscale</td>
+  </tr>
+  <tr>
+    <td><img src="building/normal.jpg"></td>
+    <td><img src="building/grey.jpg"></td>
+  </tr>
+<tr>
+    <td>X Gradient</td>
+    <td>Y Gradient</td>
+  </tr>
+  <tr>
+    <td><img src="building/xGrad.jpg"></td>
+    <td><img src="building/yGrad.jpg"></td>
+  </tr>
+<tr>
+    <td>Edge Magnitude</td>
+    <td>Suppressed Edges</td>
+  </tr>
+  <tr>
+    <td><img src="building/edgeStrength.jpg"></td>
+    <td><img src="building/suppressed.jpg"></td>
+  </tr>
+<tr>
+    <td>Thresholded Edges</td>
+    <td>Eiganvalues</td>
+  </tr>
+  <tr>
+    <td><img src="building/threshold.jpg"></td>
+    <td><img src="building/eigan.jpg"></td>
+  </tr>
+<tr>
+    <td>with Corners</td>
+  </tr>
+  <tr>
+    <td><img src="building/corners.jpg"></td>
+  </tr>
+</table> 
+<br>
+mandrill.jpg<br>
+CONST_SIGMA = 5.0<br>
+CONST_KWINDOW = 15<br>
+CONST_THI = .3<br>
+CONST_TLO = .15<br>
+CONST_CWINDOW = 23<br>
+<table border="1" style="width:100%">
+  <tr>
+    <td>Standard</td>
+    <td>Greyscale</td>
+  </tr>
+  <tr>
+    <td><img src="mandrill/normal.jpg"></td>
+    <td><img src="mandrill/grey.jpg"></td>
+  </tr>
+<tr>
+    <td>X Gradient</td>
+    <td>Y Gradient</td>
+  </tr>
+  <tr>
+    <td><img src="mandrill/xGrad.jpg"></td>
+    <td><img src="mandrill/yGrad.jpg"></td>
+  </tr>
+<tr>
+    <td>Edge Magnitude</td>
+    <td>Suppressed Edges</td>
+  </tr>
+  <tr>
+    <td><img src="mandrill/edgeStrength.jpg"></td>
+    <td><img src="mandrill/suppressed.jpg"></td>
+  </tr>
+<tr>
+    <td>Thresholded Edges</td>
+    <td>Eiganvalues</td>
+  </tr>
+  <tr>
+    <td><img src="mandrill/threshold.jpg"></td>
+    <td><img src="mandrill/eigan.jpg"></td>
+  </tr>
+<tr>
+    <td>with Corners</td>
+  </tr>
+  <tr>
+    <td><img src="mandrill/corners.jpg"></td>
+  </tr>
+</table> 
+<br>
+Termina.png:<br> 
+CONST_SIGMA = 1.5<br>
+CONST_KWINDOW = 9<br>
+CONST_THI = .3<br>
+CONST_TLO = .1<br>
+CONST_CWINDOW = 11<br>
+<table border="1" style="width:100%">
+  <tr>
+    <td>Standard</td>
+    <td>Greyscale</td>
+  </tr>
+  <tr>
+    <td><img src="Termina/normal.jpg"></td>
+    <td><img src="Termina/grey.jpg"></td>
+  </tr>
+<tr>
+    <td>X Gradient</td>
+    <td>Y Gradient</td>
+  </tr>
+  <tr>
+    <td><img src="Termina/xGrad.jpg"></td>
+    <td><img src="Termina/yGrad.jpg"></td>
+  </tr>
+<tr>
+    <td>Edge Magnitude</td>
+    <td>Suppressed Edges</td>
+  </tr>
+  <tr>
+    <td><img src="Termina/edgeStrength.jpg"></td>
+    <td><img src="Termina/suppressed.jpg"></td>
+  </tr>
+<tr>
+    <td>Thresholded Edges</td>
+    <td>Eiganvalues</td>
+  </tr>
+  <tr>
+    <td><img src="Termina/threshold.jpg"></td>
+    <td><img src="Termina/eigan.jpg"></td>
+  </tr>
+<tr>
+    <td>with Corners</td>
+  </tr>
+  <tr>
+    <td><img src="Termina/corners.jpg"></td>
+  </tr>
+</table> 
